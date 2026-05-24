@@ -1,0 +1,19 @@
+{
+  "camera_index": 0,
+  "video_source": null,
+  "frame_resize_width": 640,
+  "dwell_seconds": 2.0,
+  "absence_seconds": 30.0,
+  "recognition_tolerance": 0.47,
+  "track_match_distance": 0.52,
+  "centroid_match_px": 180,
+  "playback_command": null,
+  "known_faces_dir": "data/known_faces",
+  "recordings_dir": "data/recordings",
+  "unknown_snapshot_dir": "data/unknown_snapshots",
+  "save_unknown_snapshots": false,
+  "allow_optional_demographics": false,
+  "demographics_gender_min_confidence": 0.7,
+  "demographics_gender_model_config": null,
+  "demographics_gender_model": "models/fairface_gender/fairface.onnx"
+}
