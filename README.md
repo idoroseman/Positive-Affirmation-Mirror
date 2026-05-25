@@ -124,3 +124,9 @@ Press `q` in the preview window to quit.
 - Unknown greeting lookup checks the gender-matched recordings directory first, then falls back to `data/recordings/unknown/`.
 - Low-confidence gender predictions are discarded before greeting selection, so the app falls back to a less specific file when the model is unsure.
 - You can extend `DemographicsService` to add smile detection, uniforms, or other business-specific routing logic.
+
+## TODO
+
+1. Add do-not-disturb hours where the mirror stays silent.
+2. Detect repeating guests and suggest adding them as known people.
+3. Ensure unknown greeting routing always falls back from `unknown_f` / `unknown_m` to `unknown` when needed.
