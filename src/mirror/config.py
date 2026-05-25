@@ -19,7 +19,7 @@ class AppConfig:
     known_faces_dir: str = "data/known_faces"
     recordings_dir: str = "data/recordings"
     unknown_snapshot_dir: str | None = "data/unknown_snapshots"
-    save_unknown_snapshots: bool = False,
+    save_unknown_snapshots: bool = False
     allow_optional_demographics: bool = True
     demographics_gender_min_confidence: float = 0.7
     demographics_gender_model_config: str | None = None
