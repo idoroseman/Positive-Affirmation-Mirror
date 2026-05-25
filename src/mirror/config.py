@@ -23,7 +23,7 @@ class AppConfig:
     allow_optional_demographics: bool = True
     demographics_gender_min_confidence: float = 0.7
     demographics_gender_model_config: str | None = None
-    demographics_gender_model: str | None = "data/models/fairface_gender/fairface.onnx"
+    demographics_gender_model: str | None = "models/fairface_gender/fairface.onnx"
 
 
 def load_config(config_path: Path) -> AppConfig:

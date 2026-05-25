@@ -47,9 +47,9 @@ data/
       0.mp3
   unknown_snapshots/
     track-7-20260512-101530.jpg
-  models/
-    fairface_gender/
-      fairface.onnx
+models/
+  fairface_gender/
+    fairface.onnx
 src/mirror/
 main.py
 config.json
@@ -77,7 +77,7 @@ cp config.example.json config.json
 
 If you want gender-based unknown greetings:
 
-1. Download a FairFace gender ONNX file to `data/models/fairface_gender/fairface.onnx`.
+1. Download a FairFace gender ONNX file to `models/fairface_gender/fairface.onnx`.
 2. Set `allow_optional_demographics` to `true` in `config.json`.
 
 The app only runs this model for unknown tracks that are still missing demographic metadata, which is much lighter than calling a full face-analysis stack on every detection frame.

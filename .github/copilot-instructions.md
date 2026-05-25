@@ -17,7 +17,7 @@
 
 - Treat `dwell_seconds`, `absence_seconds`, `recognition_tolerance`, `track_match_distance`, `centroid_match_px`, `demographics_gender_min_confidence`, and `demographics_age_min_confidence` as the main behavior-tuning surfaces. Do not change defaults casually.
 - Paths in config are resolved from the current working directory. If code depends on files under `data/`, keep that assumption consistent or update both code and docs together.
-- Unknown-face demographic routing is optional. Keep the default path working without DeepFace or TensorFlow Lite installed, using the OpenCV Caffe model files under `data/models/opencv_gender/` when demographics are enabled.
+- Unknown-face demographic routing is optional. Keep the default path working without DeepFace or TensorFlow Lite installed, using the OpenCV Caffe model files under `models/opencv_gender/` when demographics are enabled.
 - `video_source` is optional and should preserve the live-camera path when unset.
 - Prefer small, local changes. If you add behavior, update [README.md](/home/ido/Dropbox/Hobby Projects/vibe/vibe-mirror/README.md) when setup, runtime flow, dataset layout, greeting asset expectations, or config knobs change.
 - Link to existing docs instead of duplicating them. The operational setup and dataset layout live in [README.md](/home/ido/Dropbox/Hobby Projects/vibe/vibe-mirror/README.md).
