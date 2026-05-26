@@ -109,6 +109,7 @@ Headless mode with a test video:
 
 ```bash
 PYTHONPATH=src python main.py --headless --video path/to/test-video.mp4
+PYTHONPATH=src .venv/bin/python main.py --video data/videos/VIDEO-2026-04-19-14-40-41.mp4 
 ```
 
 Press `q` in the preview window to quit.
@@ -130,3 +131,6 @@ Press `q` in the preview window to quit.
 1. Add do-not-disturb hours where the mirror stays silent.
 2. Detect repeating guests and suggest adding them as known people.
 3. Ensure unknown greeting routing always falls back from `unknown_f` / `unknown_m` to `unknown` when needed.
+4. if face is passing dwell and there are more that are almost there, group them together
+5. ~~show "now playing" on debug screen~~
+6. backend server

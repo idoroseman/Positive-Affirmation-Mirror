@@ -1,4 +1,5 @@
 .venv/
+.venv_mac/
 __pycache__/
 *.py[cod]
 

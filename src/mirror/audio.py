@@ -13,6 +13,7 @@ class AudioPlayer:
         self._playback_command = playback_command or self._detect_default_command()
         self._worker = threading.Thread(target=self._run, daemon=True)
         self._worker.start()
+        self.now_playing: Path | None = None
 
     def enqueue(self, audio_path: Path) -> None:
         if audio_path.exists():
@@ -37,6 +38,8 @@ class AudioPlayer:
             try:
                 command = self._build_command(audio_path)
                 if command is not None:
+                    self.now_playing = audio_path
                     subprocess.run(command, check=False)
             finally:
+                self.now_playing = None
                 self._queue.task_done()

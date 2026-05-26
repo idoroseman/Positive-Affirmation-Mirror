@@ -27,6 +27,7 @@ MIN_GENDER_STABLE_CONFIDENCE = 0.90
 class recordingEvent:
     audio_path: Path
     reason: str
+    track_id: int | None = None
 
 
 @dataclass(slots=True)
@@ -223,15 +224,19 @@ class recordingSelector:
             )
             track.dwell_logged = True
         reason = "unknown"
+        selected_track_id: int | None = None
         
         if len(qualified_tracks) >= 3:
             audio_path = self._pick_from_directory(self._recordings_dir / "group")
             reason = "group"
+            selected_track_id = qualified_tracks[0].track_id
         elif len(qualified_tracks) == 2:
             audio_path = self._pick_from_directory(self._recordings_dir / "couple")
             reason = "two_people"
+            selected_track_id = qualified_tracks[0].track_id
         elif len(qualified_tracks) == 1:
             track = qualified_tracks[0]
+            selected_track_id = track.track_id
             gender = track.metadata.get("gender") or track.demographics_label
 
             if track.person_name:
@@ -248,12 +253,12 @@ class recordingSelector:
                 reason = "unknown"
 
         if audio_path is None:
-            print(f"[Greet]: {track.person_name or 'unknown'} -> no audio file found")
+            print(f"[Greet]: id={selected_track_id} {reason} -> no audio file found")
             return None
 
         for track in qualified_tracks:
             track.greeted = True
-        return recordingEvent(audio_path=audio_path, reason=reason)
+        return recordingEvent(audio_path=audio_path, reason=reason, track_id=selected_track_id)
 
     def _pick_from_directory(self, directory: Path) -> Path | None:
         if not directory.is_dir():
@@ -374,7 +379,7 @@ def describe_visible_tracks(frame_bgr, visible_tracks: list[Track], demographics
         _update_gender_metadata(track, result)
 
 
-def annotate_frame(frame_bgr, tracks: list[Track], now: float, dwell_seconds: float, fps: float | None) -> None:
+def annotate_frame(frame_bgr, tracks: list[Track], now: float, fps: float | None, now_playing: Path | None) -> None:
     for track in tracks:
         if not track.visible:
             continue
@@ -420,7 +425,7 @@ def annotate_frame(frame_bgr, tracks: list[Track], now: float, dwell_seconds: fl
     fps_text = f"{fps:.1f}" if fps is not None else "N/A"
     cv2.putText(
         frame_bgr,
-        f"fps: {fps_text} faces: {faces:2}",
+        f"fps: {fps_text} active: {faces:2}/{len(tracks)}",
         (10, 25),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.65,
@@ -428,7 +433,16 @@ def annotate_frame(frame_bgr, tracks: list[Track], now: float, dwell_seconds: fl
         1,
         cv2.LINE_AA,
     )
-
+    cv2.putText(
+        frame_bgr,
+        f"{now_playing.name if now_playing else ''}",
+        (10, 45),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.55,
+        (10, 10, 10),
+        1,
+        cv2.LINE_AA,
+    )
 
 
 def resize_frame(frame_bgr, target_width: int):
@@ -504,10 +518,13 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
                 )
             event = selector.choose(tracker.visible_tracks(), config.dwell_seconds, now)
             if event is not None:
-                print(f"[Greet]: {event.reason} -> {event.audio_path.name}")
+                if event.track_id is None:
+                    print(f"[Greet]: {event.reason} -> {event.audio_path.name}")
+                else:
+                    print(f"[Greet]: id={event.track_id} {event.reason} -> {event.audio_path.name}")
                 audio_player.enqueue(event.audio_path)
 
-            annotate_frame(frame_bgr, last_tracks, now, config.dwell_seconds, fps)
+            annotate_frame(frame_bgr, last_tracks, now, fps, audio_player.now_playing)
 
             if show_window:
                 cv2.imshow("mirror", frame_bgr)
