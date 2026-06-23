@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import random
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -454,12 +455,13 @@ def resize_frame(frame_bgr, target_width: int):
     return cv2.resize(frame_bgr, new_size)
 
 
+
+
 def run_app(config: AppConfig, show_window: bool = True) -> int:
     base_dir = Path.cwd()
     known_faces_dir = base_dir / config.known_faces_dir
     recordings_dir = base_dir / config.recordings_dir
     unknown_snapshot_dir = base_dir / config.unknown_snapshot_dir if config.unknown_snapshot_dir else None
-    video_source_path = base_dir / config.video_source if config.video_source else None
     gender_config_path = (
         base_dir / config.demographics_gender_model_config if config.demographics_gender_model_config else None
     )
@@ -480,11 +482,29 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
         gender_min_confidence=config.demographics_gender_min_confidence,
     )
 
-    capture_source = str(video_source_path) if video_source_path is not None else config.camera_index
-    capture = cv2.VideoCapture(capture_source)
-    if not capture.isOpened():
-        if video_source_path is not None:
-            print(f"[Error] Could not open video source: {video_source_path}")
+    capture = None
+    picam = None
+
+    if config.camera_index == "picam":
+        try:
+            from picamera2 import Picamera2
+        except ModuleNotFoundError as exc:
+            print(f"[Error] {exc}")
+            print("[Error] Raspberry Pi camera support comes from OS packages, not pip.")
+            print("[Error] Install:")
+            print("  sudo apt install -y python3-picamera2 python3-libcamera libcamera-dev libudev-dev")
+            print("[Error] If you use a virtual environment, recreate it with:")
+            print("  python3 -m venv --system-site-packages .venv")
+            return 1
+        picam = Picamera2()
+        picam.configure(picam.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)}))
+        picam.start()
+    else:
+        capture = cv2.VideoCapture(config.camera_index)
+
+    if capture is not None and not capture.isOpened():
+        if config.camera_index is not None:
+            print(f"[Error] Could not open video source: {config.camera_index}")
         else:
             print("[Error] Could not open webcam")
         return 1
@@ -493,14 +513,18 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
     last_tracks: list[Track] = []
     try:
         while True:
-            ok, frame_bgr = capture.read()
-            if not ok:
-                if video_source_path is not None:
-                    break
-                print("[Error] Camera frame read failed")
-                return 1
+            if config.camera_index == "picam":
+                frame_bgr = picam.capture_array()
+            else:
+                ok, frame_bgr = capture.read()
+                if not ok:
+                    if config.camera_index is not None:
+                        break
+                    print("[Error] Camera frame read failed")
+                    return 1
 
-            frame_bgr = resize_frame(frame_bgr, config.frame_resize_width)
+                frame_bgr = resize_frame(frame_bgr, config.frame_resize_width)
+            
             now = time.monotonic()
             fps = None if previous_frame_at is None else 1.0 / max(now - previous_frame_at, 1e-6)
             previous_frame_at = now
@@ -534,7 +558,10 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
                 if os.environ.get("MIRROR_ONE_SHOT") == "1":
                     break
     finally:
-        capture.release()
+        if capture is not None:
+            capture.release()
+        if picam is not None:
+            picam.stop()
         cv2.destroyAllWindows()
 
     return 0
@@ -552,5 +579,5 @@ def main() -> int:
     args = parse_args()
     config = load_config(Path(args.config))
     if args.video:
-        config.video_source = args.video
+        config.camera_index = args.video
     return run_app(config, show_window=not args.headless)

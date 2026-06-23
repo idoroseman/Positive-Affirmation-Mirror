@@ -1,0 +1,1 @@
+ DISPLAY=:0 PYTHONPATH=src python3 main.py

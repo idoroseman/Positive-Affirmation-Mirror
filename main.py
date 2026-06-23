@@ -1,3 +1,6 @@
+import sys
+from pathlib import Path
+
 from mirror.app import main
 
 

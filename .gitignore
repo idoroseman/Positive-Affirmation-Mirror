@@ -8,8 +8,10 @@ __pycache__/
 .vscode/
 
 .DS_Store
+._*
 
 config.json
 data/
+*.log
 
 

@@ -67,13 +67,28 @@ Example:
 
 ```bash
 sudo apt update
-sudo apt install -y python3-venv python3-dev cmake build-essential libatlas-base-dev libopenblas-dev liblapack-dev libjpeg-dev aplay ffmpeg
-python3 -m venv .venv
+sudo apt install -y python3-venv python3-dev cmake build-essential libatlas-base-dev libopenblas-dev liblapack-dev libjpeg-dev libcap-dev python3-picamera2 python3-libcamera libcamera-dev libudev-dev aplay ffmpeg
+python3 -m venv --system-site-packages .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 cp config.example.json config.json
 ```
+
+If you use `"camera_index": "picam"`, install `picamera2` and `libcamera` from `apt`, not `pip`. Those Python modules are shipped as Raspberry Pi OS packages and are often invisible from a plain venv unless you create it with `--system-site-packages`.
+
+## Setup on macOS
+
+```bash
+brew install python3 libopenblas lapack
+python3 -m venv .venv
+source .venv/bin/activate
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r requirements.txt
+cp config.example.json config.json
+```
+
+Note: On macOS, use `--video path/to/test-video.mp4` or a standard OpenCV webcam index (default `0`). The Raspberry Pi `picamera2` library is not available on macOS.
 
 If you want gender-based unknown greetings:
 
