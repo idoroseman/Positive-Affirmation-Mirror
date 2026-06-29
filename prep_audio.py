@@ -4,19 +4,22 @@ import argparse
 from urllib import response
 from elevenlabs.client import ElevenLabs
 
-greetings_path = "greetings/"
-audio_path = "date/recordings/"
+greetings_path = "data/greetings/"
+audio_path = "data/recordings/"
 
 def generate_audio_file(text, name):
     global audio_path, client, voice_id
     os.makedirs(os.path.join(audio_path, name), exist_ok=True)
-    filename = f"compliment-{hex(hash(text))}.mp3"
+    filename = f"compliment-{abs(hash(text)):015x}.mp3"
     response = client.text_to_speech.convert(
                 text=text,
                 voice_id=voice_id,
                 model_id="eleven_v3",
                 output_format="mp3_44100_128"
             )
+    if os.path.exists(os.path.join(audio_path, name, filename)):
+        print(f"Audio file already exists for {name}/{filename}: {text.strip()}")
+        return
     with open(os.path.join(audio_path, name, filename), "wb") as audio_file:
         for chunk in response:
             if chunk:
@@ -45,13 +48,12 @@ if __name__ == "__main__":
 
     client = ElevenLabs(api_key=secrets['api_key'])
     parser = argparse.ArgumentParser("prep_audio.py")
-    subparsers = parser.add_subparsers(help='sub-command help', dest='command')
-    subparsers.add_parser('names', help='generate audio files for names')
-    subparsers.add_parser('greetings', help='generate audio files for greetings')
+    parser.add_argument("--clean", action="store_true", help="Remove existing audio files before generating new ones")
+    parser.add_argument("--voice", type=str, default=voice_id, help="Voice ID to use for text-to-speech")
     args = parser.parse_args()
-    if args.command == 'greetings':
-        generate_greetings()
-    elif args.command == 'all':
-        generate_greetings()
-    else:
-        print("Please specify a command: names or greetings")
+    voice_id = args.voice
+    if args.clean:
+        for root, dirs, files in os.walk(audio_path):
+            for file in files:
+                os.remove(os.path.join(root, file))
+    generate_greetings()
