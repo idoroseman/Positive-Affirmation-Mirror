@@ -11,6 +11,7 @@ __pycache__/
 ._*
 
 config.json
+secrets.json
 data/
 *.log
 
