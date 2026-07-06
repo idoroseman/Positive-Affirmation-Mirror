@@ -38,7 +38,7 @@ def generate_greetings():
                 if text.strip() == "":
                     continue
                 generate_audio_file(text, name)
-        
+
 if __name__ == "__main__":
     os.makedirs(audio_path, exist_ok=True)
 
