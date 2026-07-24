@@ -30,8 +30,12 @@ class FaceLibrary:
         if not self._known_faces_dir.exists():
             return faces
 
-        for person_dir in sorted(path for path in self._known_faces_dir.iterdir() if path.is_dir()):
+        for person_dir in sorted(
+            path for path in self._known_faces_dir.iterdir() if path.is_dir() and not path.name.startswith(".")
+        ):
             for image_path in sorted(person_dir.glob("*")):
+                if image_path.name.startswith("."):
+                    continue
                 if image_path.suffix.lower() not in {".jpg", ".jpeg", ".png"}:
                     continue
                 image = face_recognition.load_image_file(image_path)

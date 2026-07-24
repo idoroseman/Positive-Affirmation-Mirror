@@ -1,6 +1,7 @@
 import json
 import os
 import argparse
+import hashlib
 from urllib import response
 from elevenlabs.client import ElevenLabs
 
@@ -10,21 +11,24 @@ audio_path = "data/recordings/"
 def generate_audio_file(text, name):
     global audio_path, client, voice_id
     os.makedirs(os.path.join(audio_path, name), exist_ok=True)
-    filename = f"compliment-{abs(hash(text)):015x}.mp3"
+    text_for_hash = text.strip()
+    filename = f"compliment-{hashlib.blake2b(text_for_hash.encode('utf-8'), digest_size=8).hexdigest()}.mp3"
+    output_path = os.path.join(audio_path, name, filename)
+    if os.path.exists(output_path):
+        print(f"Audio file already exists for {name}/{filename}: {text_for_hash}")
+        return
+
     response = client.text_to_speech.convert(
                 text=text,
                 voice_id=voice_id,
                 model_id="eleven_v3",
                 output_format="mp3_44100_128"
             )
-    if os.path.exists(os.path.join(audio_path, name, filename)):
-        print(f"Audio file already exists for {name}/{filename}: {text.strip()}")
-        return
-    with open(os.path.join(audio_path, name, filename), "wb") as audio_file:
+    with open(output_path, "wb") as audio_file:
         for chunk in response:
             if chunk:
                 audio_file.write(chunk)
-    print(f"Generated audio for {name}/{filename}: {text.strip()}")
+    print(f"Generated audio for {name}/{filename}: {text_for_hash}")
 
 def generate_greetings():
     # generate audio files from text files
@@ -48,11 +52,12 @@ if __name__ == "__main__":
 
     client = ElevenLabs(api_key=secrets['api_key'])
     parser = argparse.ArgumentParser("prep_audio.py")
-    parser.add_argument("--clean", action="store_true", help="Remove existing audio files before generating new ones")
+    parser.add_argument("--clean", action="store_true", default=False, help="Remove existing audio files before generating new ones")
     parser.add_argument("--voice", type=str, default=voice_id, help="Voice ID to use for text-to-speech")
     args = parser.parse_args()
     voice_id = args.voice
     if args.clean:
+        print("Cleaning existing audio files...")
         for root, dirs, files in os.walk(audio_path):
             for file in files:
                 os.remove(os.path.join(root, file))
