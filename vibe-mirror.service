@@ -1,0 +1,17 @@
+[Unit]
+Description=Vibe Mirror Greeter
+After=network.target sound.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+WorkingDirectory=/home/admin/vibe-mirror
+Environment=PYTHONPATH=src
+ExecStart=/home/admin/vibe-mirror/.venv/bin/python main.py --headless
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

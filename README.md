@@ -130,6 +130,31 @@ PYTHONPATH=src .venv/bin/python main.py --video data/videos/VIDEO-2026-04-19-14-
 
 Press `q` in the preview window to quit.
 
+## Run as systemd service
+
+The repository includes a starter unit file at `vibe-mirror.service`.
+
+1. Edit `vibe-mirror.service` and set `User`, `Group`, `WorkingDirectory`, and `ExecStart` for your Pi.
+2. Install the service file.
+3. Reload systemd and enable the service.
+4. Start the service and check logs.
+
+```bash
+sudo cp vibe-mirror.service /etc/systemd/system/vibe-mirror.service
+sudo systemctl daemon-reload
+sudo systemctl enable vibe-mirror.service
+sudo systemctl start vibe-mirror.service
+sudo systemctl status vibe-mirror.service
+journalctl -u vibe-mirror.service -f
+```
+
+Stop or restart later:
+
+```bash
+sudo systemctl stop vibe-mirror.service
+sudo systemctl restart vibe-mirror.service
+```
+
 ## Notes
 
 - The default detector uses the HOG model from `face_recognition`, which is reasonable for Raspberry Pi CPU usage.
