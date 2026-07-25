@@ -17,6 +17,7 @@ class AppConfig:
     centroid_match_px: int = 180
     playback_command: str | None = None
     known_faces_dir: str = "data/known_faces"
+    known_faces_reload_interval_seconds: float = 2.0
     recordings_dir: str = "data/recordings"
     unknown_snapshot_dir: str | None = "data/unknown_snapshots"
     save_unknown_snapshots: bool = False

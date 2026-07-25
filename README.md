@@ -13,6 +13,7 @@ Raspberry Pi greeter for a live camera or test video that:
 - A face must remain visible for `dwell_seconds` before any greeting is triggered. The default is `2.0` seconds.
 - Once greeted, a tracked face will not be greeted again while it remains in view.
 - If a face disappears for more than `absence_seconds`, its track is removed. The default is `30.0` seconds.
+- The app periodically rescans `known_faces_dir` and automatically reloads known-face encodings when files are added, removed, or changed.
 - Two visible faces trigger the couple greeting.
 - Three or more visible faces trigger the group greeting.
 - A single visible face triggers:
@@ -135,6 +136,7 @@ Press `q` in the preview window to quit.
 - Recognition accuracy improves when each known person has multiple clear front-facing photos.
 - `video_source` takes precedence over `camera_index` when it is set.
 - Unknown faces are tracked using face embeddings and centroid proximity, so short-lived frame drops do not immediately reset the greeting state.
+- `known_faces_reload_interval_seconds` controls how often the app checks for known-face dataset changes while running.
 - When an unknown face passes dwell for the first time, the app saves one cropped face snapshot to `unknown_snapshot_dir`.
 - Optional demographics are loaded from the shipped model paths if present; if the files are missing or no stable label is available, unknown greetings use `data/recordings/unknown/`.
 - Unknown greeting lookup checks the gender-matched recordings directory first, then falls back to `data/recordings/unknown/`.

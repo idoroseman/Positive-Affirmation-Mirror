@@ -306,7 +306,7 @@ def save_unknown_snapshots(
 
         snapshot_dir.mkdir(parents=True, exist_ok=True)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        filename = f"track-{track.track_id}-{timestamp}.jpg"
+        filename = f"{timestamp}-track-{track.track_id}.jpg"
         snapshot_path = snapshot_dir / filename
         if cv2.imwrite(str(snapshot_path), face_crop):
             track.metadata["snapshot_saved"] = "1"
@@ -529,6 +529,8 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
             fps = None if previous_frame_at is None else 1.0 / max(now - previous_frame_at, 1e-6)
             previous_frame_at = now
 
+            if not tracker.visible_tracks():
+                face_library.maybe_reload(now, config.known_faces_reload_interval_seconds)
             detections = build_detections(frame_bgr, face_library)
             last_tracks = tracker.update(detections, now=now)
             describe_visible_tracks(frame_bgr, tracker.visible_tracks(), demographics)

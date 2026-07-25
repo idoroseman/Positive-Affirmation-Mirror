@@ -20,15 +20,48 @@ class MatchResult:
 
 
 class FaceLibrary:
+    SUPPORTED_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
+
     def __init__(self, known_faces_dir: Path, tolerance: float) -> None:
         self._known_faces_dir = known_faces_dir
         self._tolerance = tolerance
-        self._faces = self._load_faces()
+        self._faces: list[KnownFace] = []
+        self._dataset_fingerprint: tuple[tuple[str, int, int], ...] = ()
+        self._last_reload_check_at: float = 0.0
+        self._reload_faces()
 
-    def _load_faces(self) -> list[KnownFace]:
-        faces: list[KnownFace] = []
+    def maybe_reload(self, now: float, check_interval_seconds: float = 2.0) -> bool:
+        if check_interval_seconds > 0 and (now - self._last_reload_check_at) < check_interval_seconds:
+            return False
+        self._last_reload_check_at = now
+
+        image_paths, fingerprint = self._scan_image_paths_and_fingerprint()
+        if fingerprint == self._dataset_fingerprint:
+            return False
+
+        previous_count = len(self._faces)
+        self._reload_faces(image_paths=image_paths, fingerprint=fingerprint)
+        print(
+            f"[Faces] Reloaded known-face dataset: {previous_count} -> {len(self._faces)} "
+            f"encodings ({len(image_paths)} image files)"
+        )
+        return True
+
+    def _reload_faces(
+        self,
+        image_paths: list[Path] | None = None,
+        fingerprint: tuple[tuple[str, int, int], ...] | None = None,
+    ) -> None:
+        if image_paths is None or fingerprint is None:
+            image_paths, fingerprint = self._scan_image_paths_and_fingerprint()
+        self._faces = self._load_faces(image_paths)
+        self._dataset_fingerprint = fingerprint
+
+    def _scan_image_paths_and_fingerprint(self) -> tuple[list[Path], tuple[tuple[str, int, int], ...]]:
+        image_paths: list[Path] = []
+        fingerprint_entries: list[tuple[str, int, int]] = []
         if not self._known_faces_dir.exists():
-            return faces
+            return image_paths, ()
 
         for person_dir in sorted(
             path for path in self._known_faces_dir.iterdir() if path.is_dir() and not path.name.startswith(".")
@@ -36,12 +69,27 @@ class FaceLibrary:
             for image_path in sorted(person_dir.glob("*")):
                 if image_path.name.startswith("."):
                     continue
-                if image_path.suffix.lower() not in {".jpg", ".jpeg", ".png"}:
+                if image_path.suffix.lower() not in self.SUPPORTED_IMAGE_SUFFIXES:
                     continue
+                try:
+                    stat = image_path.stat()
+                except OSError:
+                    continue
+                image_paths.append(image_path)
+                relative_path = image_path.relative_to(self._known_faces_dir).as_posix()
+                fingerprint_entries.append((relative_path, stat.st_mtime_ns, stat.st_size))
+        return image_paths, tuple(fingerprint_entries)
+
+    def _load_faces(self, image_paths: list[Path]) -> list[KnownFace]:
+        faces: list[KnownFace] = []
+        for image_path in image_paths:
+            try:
                 image = face_recognition.load_image_file(image_path)
                 encodings = face_recognition.face_encodings(image)
-                if encodings:
-                    faces.append(KnownFace(name=person_dir.name, encoding=encodings[0]))
+            except OSError:
+                continue
+            if encodings:
+                faces.append(KnownFace(name=image_path.parent.name, encoding=encodings[0]))
         return faces
 
     def match(self, encoding: np.ndarray) -> MatchResult:

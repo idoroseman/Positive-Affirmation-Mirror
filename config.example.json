@@ -9,6 +9,7 @@
   "centroid_match_px": 180,
   "playback_command": null,
   "known_faces_dir": "data/known_faces",
+  "known_faces_reload_interval_seconds": 2.0,
   "recordings_dir": "data/recordings",
   "unknown_snapshot_dir": "data/unknown_snapshots",
   "save_unknown_snapshots": false,
