@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import logging
 
 import face_recognition
 import numpy as np
@@ -41,9 +42,11 @@ class FaceLibrary:
 
         previous_count = len(self._faces)
         self._reload_faces(image_paths=image_paths, fingerprint=fingerprint)
-        print(
-            f"[Faces] Reloaded known-face dataset: {previous_count} -> {len(self._faces)} "
-            f"encodings ({len(image_paths)} image files)"
+        logging.info(
+            "[Faces] Reloaded known-face dataset: %s -> %s encodings (%s image files)",
+            previous_count,
+            len(self._faces),
+            len(image_paths),
         )
         return True
 

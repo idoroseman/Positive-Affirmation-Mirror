@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import time
+import logging
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -67,9 +68,11 @@ class TrackTable:
         ]
         for track_id in stale_track_ids:
             track = self._tracks[track_id]
-            print(
-                f"[Track] timed out: id={track.track_id} label={self._describe_track(track)} "
-                f"absent_for={now - track.last_seen_at:.1f}s"
+            logging.info(
+                "[Track] timed out: id=%s label=%s absent_for=%.1fs",
+                track.track_id,
+                self._describe_track(track),
+                now - track.last_seen_at,
             )
             del self._tracks[track_id]
 
@@ -116,7 +119,7 @@ class TrackTable:
         )
         self._tracks[track.track_id] = track
         self._next_track_id += 1
-        print(f"[Track] added: id={track.track_id} label={self._describe_track(track)} bbox={track.bbox}")
+        logging.info("[Track] added: id=%s label=%s bbox=%s", track.track_id, self._describe_track(track), track.bbox)
         return track
 
     def _refresh_track(self, track: Track, detection: Detection, now: float) -> None:

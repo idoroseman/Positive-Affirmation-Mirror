@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import random
 import sys
@@ -160,7 +161,7 @@ class DemographicsService:
             net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
             return FairFaceGenderAnalyzer(net=net, min_confidence=min_confidence)
         except cv2.error as exc:
-            print(f"[Error] Could not load demographics model {model_path.name}: {exc}")
+            logging.error(f"[Error] Could not load demographics model {model_path.name}: {exc}")
             return None
 
     def needs_description(self, track: Track) -> bool:
@@ -219,7 +220,7 @@ class recordingSelector:
         for track in qualified_tracks:
             if track.dwell_logged:
                 continue
-            print(
+            logging.info(
                 f"[Track] dwelled: id={track.track_id} label={describe_track(track)} "
                 f"seen_for={now - track.first_seen_at:.1f}s"
             )
@@ -254,7 +255,7 @@ class recordingSelector:
                 reason = "unknown"
 
         if audio_path is None:
-            print(f"[Greet]: id={selected_track_id} {reason} -> no audio file found")
+            logging.info(f"[Greet]: id={selected_track_id} {reason} -> no audio file found")
             return None
 
         for track in qualified_tracks:
@@ -310,7 +311,7 @@ def save_unknown_snapshots(
         snapshot_path = snapshot_dir / filename
         if cv2.imwrite(str(snapshot_path), face_crop):
             track.metadata["snapshot_saved"] = "1"
-            print(f"[Debug] saved Snapshot: id={track.track_id} path={filename}")
+            logging.debug(f"[Debug] saved Snapshot: id={track.track_id} path={filename}")
 
 
 def build_detections(
@@ -489,12 +490,12 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
         try:
             from picamera2 import Picamera2
         except ModuleNotFoundError as exc:
-            print(f"[Error] {exc}")
-            print("[Error] Raspberry Pi camera support comes from OS packages, not pip.")
-            print("[Error] Install:")
-            print("  sudo apt install -y python3-picamera2 python3-libcamera libcamera-dev libudev-dev")
-            print("[Error] If you use a virtual environment, recreate it with:")
-            print("  python3 -m venv --system-site-packages .venv")
+            logging.error(f"[Error] {exc}")
+            logging.error("[Error] Raspberry Pi camera support comes from OS packages, not pip.")
+            logging.error("[Error] Install:")
+            logging.error("  sudo apt install -y python3-picamera2 python3-libcamera libcamera-dev libudev-dev")
+            logging.error("[Error] If you use a virtual environment, recreate it with:")
+            logging.error("  python3 -m venv --system-site-packages .venv")
             return 1
         picam = Picamera2()
         picam.configure(picam.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)}))
@@ -504,9 +505,9 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
 
     if capture is not None and not capture.isOpened():
         if config.camera_index is not None:
-            print(f"[Error] Could not open video source: {config.camera_index}")
+            logging.error(f"[Error] Could not open video source: {config.camera_index}")
         else:
-            print("[Error] Could not open webcam")
+            logging.error("[Error] Could not open webcam")
         return 1
 
     previous_frame_at: float | None = None
@@ -520,7 +521,7 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
                 if not ok:
                     if config.camera_index is not None:
                         break
-                    print("[Error] Camera frame read failed")
+                    logging.error("[Error] Camera frame read failed")
                     return 1
 
                 frame_bgr = resize_frame(frame_bgr, config.frame_resize_width)
@@ -545,9 +546,9 @@ def run_app(config: AppConfig, show_window: bool = True) -> int:
             event = selector.choose(tracker.visible_tracks(), config.dwell_seconds, now)
             if event is not None:
                 if event.track_id is None:
-                    print(f"[Greet]: {event.reason} -> {event.audio_path.name}")
+                    logging.info(f"[Greet]: {event.reason} -> {event.audio_path.name}")
                 else:
-                    print(f"[Greet]: id={event.track_id} {event.reason} -> {event.audio_path.name}")
+                    logging.info(f"[Greet]: id={event.track_id} {event.reason} -> {event.audio_path.name}")
                 audio_player.enqueue(event.audio_path)
 
             annotate_frame(frame_bgr, last_tracks, now, fps, audio_player.now_playing)
@@ -578,8 +579,16 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        force=True,
+    )
     args = parse_args()
+    logging.info("Starting vibe-mirror")
     config = load_config(Path(args.config))
+    logging.info("Loaded config from %s", args.config)
     if args.video:
         config.camera_index = args.video
+        logging.info("Overriding camera input with video: %s", args.video)
     return run_app(config, show_window=not args.headless)

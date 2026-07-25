@@ -8,10 +8,15 @@ Type=simple
 User=admin
 Group=admin
 WorkingDirectory=/home/admin/vibe-mirror
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/admin/.Xauthority
+Environment=MIRROR_APLAY_DEVICE=plughw:3,0
 Environment=PYTHONPATH=src
-ExecStart=/home/admin/vibe-mirror/.venv/bin/python main.py --headless
+ExecStart=/home/admin/vibe-mirror/.venv/bin/python main.py
 Restart=on-failure
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
+
+

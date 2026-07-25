@@ -155,6 +155,62 @@ sudo systemctl stop vibe-mirror.service
 sudo systemctl restart vibe-mirror.service
 ```
 
+If the service runs but no audio is heard:
+
+1. Ensure a player exists for the service user (`mpg123` is preferred):
+
+```bash
+sudo apt install -y mpg123
+sudo -u admin which mpg123
+```
+
+2. Confirm the service user can play a file directly:
+
+```bash
+sudo -u admin mpg123 -q /home/admin/vibe-mirror/data/recordings/unknown/0.mp3
+```
+
+If `mpg123` or `ffplay` still fail under systemd, force the ALSA-native pipeline in `config.json`:
+
+```json
+"playback_command": "ffmpeg-aplay"
+```
+
+This uses `ffmpeg` to decode and `aplay` to send PCM directly to ALSA.
+
+If ALSA default still fails (for example `audio open error: Unknown error 524`), set a specific output device in the service:
+
+```ini
+Environment=MIRROR_APLAY_DEVICE=plughw:0,0
+```
+
+Then reload and restart:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart vibe-mirror.service
+```
+
+To discover device ids:
+
+```bash
+aplay -l
+```
+
+3. Make sure the service has audio-group access (already set in `vibe-mirror.service`):
+
+```bash
+sudo systemctl cat vibe-mirror.service | grep -E 'User=|Group=|SupplementaryGroups='
+```
+
+4. Restart and inspect playback errors from the app logs:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart vibe-mirror.service
+journalctl -u vibe-mirror.service -f -o short-iso
+```
+
 ## Notes
 
 - The default detector uses the HOG model from `face_recognition`, which is reasonable for Raspberry Pi CPU usage.
