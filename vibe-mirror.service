@@ -12,7 +12,7 @@ Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/admin/.Xauthority
 Environment=MIRROR_APLAY_DEVICE=plughw:3,0
 Environment=PYTHONPATH=src
-ExecStart=/home/admin/vibe-mirror/.venv/bin/python main.py
+ExecStart=/home/admin/vibe-mirror/.venv/bin/python main.py --headless
 Restart=on-failure
 RestartSec=5
 
